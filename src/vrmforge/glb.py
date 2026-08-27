@@ -122,6 +122,12 @@ class Glb:
 
         views = self.json.setdefault("bufferViews", [])
         views.append({"buffer": 0, "byteOffset": offset, "byteLength": len(payload)})
+
+        # Keep buffers[0].byteLength true at all times, not just at save(), so a
+        # half-built Glb never looks corrupt to validation.
+        buffers = self.json.setdefault("buffers", [{}])
+        buffers[0]["byteLength"] = len(self.bin)
+
         return len(views) - 1
 
     # ── Convenience ──────────────────────────────────────────────────────────

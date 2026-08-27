@@ -66,6 +66,17 @@ def vrm(tmp_path):
     return path
 
 
+
+# The 13 required humanoid bones beyond head and hips.
+_EXTRA_BONES = [
+    "spine",
+    "leftUpperArm", "leftLowerArm", "leftHand",
+    "rightUpperArm", "rightLowerArm", "rightHand",
+    "leftUpperLeg", "leftLowerLeg", "leftFoot",
+    "rightUpperLeg", "rightLowerLeg", "rightFoot",
+]
+
+
 @pytest.fixture
 def donor(tmp_path):
     """A VRM with a skinned accessory hanging off the head, like VRoid cat ears."""
@@ -132,13 +143,20 @@ def donor(tmp_path):
             {"name": "J_Opt_R_CatEar1", "translation": [0.1, 0.1, 0]},
             {"name": "MeshNode", "mesh": 0, "skin": 0},
             {"name": "J_Bip_C_Hips", "translation": [0, 0.9, 0]},
-        ],
+        ]
+        # VRM 1.0 requires 15 humanoid bones; a fixture missing them is not a
+        # valid VRM and would make every validation test ambiguous.
+        + [{"name": b, "translation": [0, 0, 0]} for b in _EXTRA_BONES],
         "skins": [{"joints": [1, 2, 3], "inverseBindMatrices": 4}],
         "extensions": {
             "VRMC_vrm": {
                 "specVersion": "1.0",
                 "meta": {"name": "Donor"},
-                "humanoid": {"humanBones": {"head": {"node": 0}, "hips": {"node": 5}}},
+                "humanoid": {"humanBones": {
+                    "head": {"node": 0},
+                    "hips": {"node": 5},
+                    **{b: {"node": 6 + i} for i, b in enumerate(_EXTRA_BONES)},
+                }},
                 "expressions": {"preset": {}},
             },
             "VRMC_springBone": {

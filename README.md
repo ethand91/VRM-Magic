@@ -80,6 +80,7 @@ vrmforge bases                         # list built-in base avatars
 vrmforge new spec.yaml -o out.vrm      # build from a base — no VRM of your own
 vrmforge inspect model.vrm             # report what's actually in the file
 vrmforge inspect model.vrm --json      # same, machine-readable
+vrmforge check model.vrm               # validate it; non-zero exit on problems
 vrmforge build spec.yaml -o out.vrm    # apply a spec to your own VRM
 vrmforge build spec.yaml -o out.vrm --dry-run
 ```
@@ -158,6 +159,35 @@ avatar.vrm
   materials (23):
     ...
 ```
+
+## Validating a file
+
+`inspect` says what a file contains. `check` says whether it is *sound*:
+
+```console
+$ vrmforge check out/catgirl.vrm
+catgirl.vrm: OK
+
+$ vrmforge check broken.vrm
+ERROR   [joint-out-of-range] mesh[0] 'Body' primitives[1]: joint index 68 >= 3 joints in skin[0]
+WARNING [incomplete-meta] meta.licenseUrl is unset; VRM consumers display this
+
+broken.vrm: 1 error(s), 1 warning(s)
+```
+
+It verifies buffer and accessor bounds, index and joint ranges, weight
+normalisation, bind-matrix counts, node hierarchy (cycles, multiple parents),
+every cross-reference between materials/textures/images/nodes/skins, the 15
+required VRM humanoid bones, and spring-bone node references.
+
+Exits non-zero on errors, so it works as a CI gate. `--strict` fails on warnings
+too.
+
+This exists because passing unit tests and being a valid *file* are different
+claims. A graft can satisfy every test and still emit a joint index past the end
+of a skin. Each check is covered by a test that deliberately corrupts a
+known-good model and asserts the check fires — a validator that has never caught
+anything only manufactures confidence.
 
 ## Spec reference
 
@@ -308,6 +338,7 @@ Two details that matter:
 
 ```bash
 ./.venv/bin/python -m pytest -q
+./.venv/bin/ruff check src tests
 ```
 
 Tests run against a synthetic VRM built in `tests/conftest.py`, so the suite

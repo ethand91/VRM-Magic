@@ -8,6 +8,7 @@ from pathlib import Path
 import click
 
 from vrmforge.bases import REGISTRY, BaseError
+from vrmforge.check import ERROR, validate
 from vrmforge.convert import ConvertError, find_blender
 from vrmforge.glb import Glb, GlbError
 from vrmforge.ops import ApplyError
@@ -131,6 +132,30 @@ def new(spec_path: str, out: str) -> None:
     Path(out).parent.mkdir(parents=True, exist_ok=True)
     written = glb.save(out)
     click.echo(f"\nwrote {out} ({written:,} bytes)")
+
+
+@main.command()
+@click.argument("vrm_path", type=click.Path(exists=True, dir_okay=False))
+@click.option("--strict", is_flag=True, help="treat warnings as failures too")
+def check(vrm_path: str, strict: bool) -> None:
+    """Validate a VRM's internal consistency. Exits non-zero on problems."""
+    try:
+        findings = validate(Glb.load(vrm_path))
+    except GlbError as exc:
+        raise SystemExit(f"error: {exc}") from exc
+
+    for finding in findings:
+        click.echo(str(finding))
+
+    errors = sum(1 for f in findings if f.severity == ERROR)
+    warnings = len(findings) - errors
+    name = Path(vrm_path).name
+    if not findings:
+        click.echo(f"{name}: OK")
+        return
+    click.echo(f"\n{name}: {errors} error(s), {warnings} warning(s)")
+    if errors or (strict and warnings):
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":  # pragma: no cover
