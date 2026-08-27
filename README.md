@@ -1,6 +1,8 @@
-# vrmforge
+# VRM-Magic
 
 Build VRM 1.0 avatars from a YAML spec.
+
+The Python package and CLI are named `vrmforge`.
 
 Point it at a `.vrm` you already have, describe the changes you want in YAML, and
 get a new `.vrm` back — with licence metadata, material colours, expression
@@ -61,7 +63,7 @@ without reading the implementation.
 ## Install
 
 ```bash
-git clone <your-repo-url> && cd vrmforge
+git clone https://github.com/ethand91/VRM-Magic.git && cd VRM-Magic
 python3 -m venv .venv
 ./.venv/bin/pip install -e ".[dev]"
 ```
