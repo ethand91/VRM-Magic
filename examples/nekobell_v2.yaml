@@ -1,0 +1,28 @@
+# Example: resolve heterochromia by setting both irises to one colour.
+#
+# `base` is resolved relative to THIS FILE, so ../models reaches the repo-root
+# models/ directory. An absolute path works too (~ is expanded).
+#
+# .vrm files are gitignored — they bundle third-party assets with their own
+# licence terms — so drop your own model in models/ before running this.
+#
+# Find the material name to match with:
+#     vrmforge inspect models/avatar.vrm
+#
+# mode: texture rewrites the iris image, SETTING hue and saturation while
+# keeping per-pixel value. A model with one green iris and one red-brown iris
+# comes out with both at the requested hue.
+
+spec_version: "1"
+base: ../models/avatar.vrm
+
+meta:
+  name: NekoBell
+  version: "2.0"
+  authors: ["Ethan"]
+  # Licence fields left unset stay exactly as the base file has them.
+
+materials:
+  - match: "*EyeIris*"
+    base_color: "#8b2318"
+    mode: texture

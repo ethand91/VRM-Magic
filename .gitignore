@@ -1,0 +1,22 @@
+# Avatar models are never committed: a .vrm bundles third-party assets
+# (VRoid's built-in hair/clothing) with their own licence terms.
+*.vrm
+*.vroid
+out/
+
+# Keep the models/ directory (and its explainer) but none of its contents.
+models/*
+!models/README.md
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.coverage
+
+# OS
+.DS_Store
