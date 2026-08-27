@@ -68,18 +68,73 @@ python3 -m venv .venv
 ./.venv/bin/pip install -e ".[dev]"
 ```
 
-Requires Python 3.10+. No Blender, no Unity, no headless 3D app — vrmforge edits
-the glTF container directly, so a build takes milliseconds rather than the ten
-seconds it costs to boot a renderer.
+Requires Python 3.10+. vrmforge edits the glTF container directly, so a build
+takes milliseconds rather than the ten seconds it costs to boot a renderer.
+Blender is optional and used for exactly one thing: converting a VRM 0.x base to
+1.0 (see below).
 
 ## Commands
 
 ```bash
+vrmforge bases                         # list built-in base avatars
+vrmforge new spec.yaml -o out.vrm      # build from a base — no VRM of your own
 vrmforge inspect model.vrm             # report what's actually in the file
 vrmforge inspect model.vrm --json      # same, machine-readable
-vrmforge build spec.yaml -o out.vrm    # apply a spec
+vrmforge build spec.yaml -o out.vrm    # apply a spec to your own VRM
 vrmforge build spec.yaml -o out.vrm --dry-run
 ```
+
+## Starting with no VRM at all
+
+`vrmforge new` builds from a registry base, so you need nothing but a spec:
+
+```yaml
+spec_version: "1"
+base: preset:100avatars/rose      # see `vrmforge bases`
+
+meta:
+  name: Test Subject
+  authors: ["you"]
+transforms:
+  height_scale: 0.95
+```
+
+```console
+$ vrmforge new examples/from_scratch.yaml -o out/mine.vrm
+  base 100avatars/rose (Rose by Polygonal Mind, CC0-1.0)
+    fetched and checksum-verified -> ~/.cache/vrmforge/bases/100avatars_rose.vrm
+    converting VRM 0.x -> 1.0 via Blender
+    restored 11 licence field(s) from registry
+  meta.name: 'undefined' -> 'Test Subject'
+  transform hips: scale [1.0, 1.0, 1.0] -> [0.95, 0.95, 0.95]
+
+wrote out/mine.vrm (2,367,816 bytes)
+```
+
+Bases are fetched once, **checksum-verified**, and cached under
+`~/.cache/vrmforge/bases`. A base whose bytes changed is refused, not silently used.
+
+### Why the registry stores licence data
+
+The only practical VRM 0.x → 1.0 converter today is Blender's VRM add-on, and it
+**resets the meta block to restrictive defaults** — `onlyAuthor`,
+`personalNonProfit`, `modification: prohibited`. A CC0 avatar comes out the far
+side claiming to be locked down, which is not merely wrong but wrong in the
+direction that matters.
+
+So the registry records each base's true licence, and `new` restores it after
+conversion, before your own `meta` is applied on top. Verify any build with
+`vrmforge inspect`.
+
+### Bases are characters, not blank mannequins
+
+The bundled bases are complete stylised low-poly characters, not neutral bodies.
+`new` is the right tool for a placeholder, a test fixture, or a starting point —
+not for authoring a specific character design. For that, model in VRoid Studio
+and use `vrmforge build` on the export.
+
+Blender is needed **only** to convert a VRM 0.x base. Set `VRMFORGE_BLENDER_PATH`
+if it is not on `PATH`. Working purely with VRM 1.0 files needs no Blender at all.
 
 `inspect` tells you the truth about a file — spec version, licence permissions,
 expression presets, humanoid bone count, spring bones, meshes with their morph
@@ -182,8 +237,9 @@ parts library is a separate and much larger problem.
 **Joint scaling does not re-simulate spring bones.** Hair and accessory physics
 were tuned at the original scale; a large change will need them retuned.
 
-**VRM 1.0 only.** VRM 0.x files are rejected with a clear message rather than
-silently mangled.
+**VRM 1.0 output only.** `inspect` reads VRM 0.x correctly, and `new` can convert
+a 0.x base, but `build` rejects a 0.x base with a clear message rather than
+silently mangling it.
 
 ## How it works
 

@@ -122,7 +122,9 @@ class TransformSpec(Strict):
 
 class AvatarSpec(Strict):
     spec_version: Literal["1"] = "1"
-    base: str = Field(description="path to the source .vrm")
+    base: str = Field(
+        description="path to a source .vrm, or 'preset:<id>' for a registry base"
+    )
     meta: MetaSpec | None = None
     materials: list[MaterialRule] = Field(default_factory=list)
     expressions: dict[str, ExpressionRule] = Field(default_factory=dict)
@@ -134,7 +136,18 @@ class AvatarSpec(Strict):
         if not isinstance(raw, dict):
             raise ValueError(f"{path}: spec must be a YAML mapping")
         spec = cls.model_validate(raw)
-        # Resolve `base` relative to the spec file, not the cwd.
-        base = Path(spec.base).expanduser()
-        spec.base = str(base if base.is_absolute() else (Path(path).parent / base).resolve())
+        if not spec.is_preset:
+            # Resolve `base` relative to the spec file, not the cwd.
+            base = Path(spec.base).expanduser()
+            spec.base = str(
+                base if base.is_absolute() else (Path(path).parent / base).resolve()
+            )
         return spec
+
+    @property
+    def is_preset(self) -> bool:
+        return self.base.startswith("preset:")
+
+    @property
+    def preset_id(self) -> str:
+        return self.base.split("preset:", 1)[1]

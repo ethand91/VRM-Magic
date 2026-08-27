@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import fnmatch
 import io
+from pathlib import Path
 from typing import Any
 
 from vrmforge.glb import Glb
@@ -275,15 +276,52 @@ def apply_transforms(glb: Glb, transforms: TransformSpec) -> list[str]:
 # ── Orchestration ────────────────────────────────────────────────────────────
 
 
+def prepare_base(spec: AvatarSpec) -> tuple[Path, list[str]]:
+    """Resolve spec.base to a local VRM 1.0 file. Returns (path, notes)."""
+    from vrmforge import bases as base_registry
+    from vrmforge.convert import to_vrm1
+
+    if not spec.is_preset:
+        return Path(spec.base), []
+
+    base = base_registry.resolve(spec.preset_id)
+    notes = [f"base {base.id} ({base.name} by {base.creator}, {base.licence})"]
+    source = base_registry.fetch(base)
+    notes.append(f"  fetched and checksum-verified -> {source}")
+
+    if base.spec_version == "1.0":
+        return source, notes
+
+    converted = source.with_name(source.stem + "_vrm1.vrm")
+    if not converted.exists():
+        notes.append("  converting VRM 0.x -> 1.0 via Blender")
+        to_vrm1(source, converted)
+    else:
+        notes.append("  using cached VRM 1.0 conversion")
+    return converted, notes
+
+
 def build(spec: AvatarSpec) -> tuple[Glb, list[str]]:
-    glb = Glb.load(spec.base)
+    base_path, changes = prepare_base(spec)
+    glb = Glb.load(base_path)
     if glb.vrm is None:
         raise ApplyError(
             f"{spec.base}: not a VRM 1.0 file "
             f"(detected: {glb.spec_version or 'plain glTF'}). "
             "vrmforge v1 targets VRM 1.0 only."
         )
-    changes: list[str] = []
+    if spec.is_preset:
+        # Conversion resets meta to restrictive defaults, so a CC0 base comes out
+        # claiming to be author-only and non-commercial. Restore the real licence
+        # from the registry BEFORE the user's own meta, which then wins.
+        from vrmforge import bases as base_registry
+
+        registry_meta = base_registry.resolve(spec.preset_id).meta
+        target = glb.vrm.setdefault("meta", {})
+        for key, value in registry_meta.items():
+            target[key] = value
+        changes.append(f"  restored {len(registry_meta)} licence field(s) from registry")
+
     if spec.meta:
         changes += apply_meta(glb, spec.meta)
     if spec.materials:
@@ -295,10 +333,42 @@ def build(spec: AvatarSpec) -> tuple[Glb, list[str]]:
     return glb, changes
 
 
+
+# VRM 0.x names every meta field differently (and misspells "usage"). Normalise
+# to the 1.0 key names so callers have one shape to read.
+_VRM0_META_MAP = {
+    "title": "name",
+    "version": "version",
+    "author": "authors",
+    "contactInformation": "contactInformation",
+    "reference": "references",
+    "otherLicenseUrl": "licenseUrl",
+    "allowedUserName": "avatarPermission",
+    "commercialUssageName": "commercialUsage",
+    "violentUssageName": "allowExcessivelyViolentUsage",
+    "sexualUssageName": "allowExcessivelySexualUsage",
+}
+
+
+def _normalise_vrm0_meta(meta0: dict) -> dict:
+    out: dict[str, Any] = {}
+    for src, dst in _VRM0_META_MAP.items():
+        if src not in meta0:
+            continue
+        value = meta0[src]
+        if dst in ("authors", "references") and isinstance(value, str):
+            value = [value] if value else []
+        out[dst] = value
+    if "licenseName" in meta0:
+        out.setdefault("licenseUrl", meta0["licenseName"])
+    return out
+
+
 def inspect(glb: Glb) -> dict[str, Any]:
     """A truthful report of what is actually in the file."""
     j = glb.json
     vrm = glb.vrm or {}
+    vrm0 = glb.vrm0 or {}
     meshes = []
     for m in j.get("meshes", []):
         prims = m.get("primitives", [])
@@ -309,12 +379,28 @@ def inspect(glb: Glb) -> dict[str, Any]:
                 "morph_targets": len(prims[0].get("targets", [])) if prims else 0,
             }
         )
+    # VRM 0.x stores the same information under different keys. Reading only the
+    # 1.0 layout would report "0 bones / no expressions" for a perfectly good 0.x
+    # file — a false negative, which is worse than refusing to answer.
+    if vrm0 and not vrm:
+        bones_0 = vrm0.get("humanoid", {}).get("humanBones", [])
+        groups_0 = vrm0.get("blendShapeMaster", {}).get("blendShapeGroups", [])
+        expressions = sorted(
+            {str(g.get("presetName") or g.get("name", "")) for g in groups_0} - {""}
+        )
+        humanoid_bones = len(bones_0)
+        meta = _normalise_vrm0_meta(vrm0.get("meta", {}))
+    else:
+        expressions = sorted(vrm.get("expressions", {}).get("preset", {}).keys())
+        humanoid_bones = len(vrm.get("humanoid", {}).get("humanBones", {}))
+        meta = vrm.get("meta", {})
+
     return {
         "spec_version": glb.spec_version,
-        "meta": vrm.get("meta", {}),
-        "expressions": sorted(vrm.get("expressions", {}).get("preset", {}).keys()),
+        "meta": meta,
+        "expressions": expressions,
         "custom_expressions": sorted(vrm.get("expressions", {}).get("custom", {}).keys()),
-        "humanoid_bones": len(vrm.get("humanoid", {}).get("humanBones", {})),
+        "humanoid_bones": humanoid_bones,
         "meshes": meshes,
         "materials": [m.get("name") for m in j.get("materials", [])],
         "extensions": sorted(j.get("extensions", {}).keys()),

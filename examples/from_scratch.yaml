@@ -1,0 +1,21 @@
+# Build an avatar with no VRM of your own — the base comes from the registry.
+#
+#     vrmforge bases          # see what's available
+#     vrmforge new examples/from_scratch.yaml -o out/mine.vrm
+#
+# The base is CC0 (Polygonal Mind's 100Avatars). It is fetched once, checksum
+# verified, cached, and — because it ships as VRM 0.x — converted to 1.0 via
+# Blender. That conversion resets the licence metadata to restrictive defaults,
+# so vrmforge restores the true CC0 permissions from the registry before your
+# own `meta` block is applied on top.
+
+spec_version: "1"
+base: preset:100avatars/rose
+
+meta:
+  name: Test Subject
+  version: "1.0"
+  authors: ["Ethan"]
+
+transforms:
+  height_scale: 0.95
