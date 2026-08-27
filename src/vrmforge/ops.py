@@ -89,11 +89,17 @@ def _texture_use_count(glb: Glb, tex_index: int) -> int:
     return count
 
 
-def _recolor_image_bytes(payload: bytes, rgb: tuple[float, float, float]) -> bytes:
+def _recolor_image_bytes(
+    payload: bytes, rgb: tuple[float, float, float], value_scale: float = 1.0
+) -> bytes:
     """Set hue and saturation to the target, preserve per-pixel value/alpha.
 
     This is a SET, not a blend: the output hue is the requested hue everywhere,
     while shading detail survives because V is untouched.
+
+    Preserving V means this cannot LIGHTEN anything — recolouring near-black fur
+    to blonde leaves it near-black, because black has no hue to see. value_scale
+    multiplies brightness (clamped at white) so dark textures can be lifted.
     """
     import colorsys
 
@@ -107,6 +113,9 @@ def _recolor_image_bytes(payload: bytes, rgb: tuple[float, float, float]) -> byt
     hsv = img.convert("RGB").convert("HSV")
     _, _, v_chan = hsv.split()
 
+    if value_scale != 1.0:
+        v_chan = v_chan.point(lambda p: min(255, int(p * value_scale)))
+
     h_chan = Image.new("L", img.size, int(round(h * 255)))
     s_chan = Image.new("L", img.size, int(round(s * 255)))
     out = Image.merge("HSV", (h_chan, s_chan, v_chan)).convert("RGB")
@@ -118,7 +127,11 @@ def _recolor_image_bytes(payload: bytes, rgb: tuple[float, float, float]) -> byt
 
 
 def _apply_texture_recolor(
-    glb: Glb, mat_index: int, mat: dict, rgb: tuple[float, float, float]
+    glb: Glb,
+    mat_index: int,
+    mat: dict,
+    rgb: tuple[float, float, float],
+    value_scale: float = 1.0,
 ) -> str:
     info = mat.get("pbrMetallicRoughness", {}).get("baseColorTexture")
     if not info:
@@ -144,7 +157,7 @@ def _apply_texture_recolor(
     view = views[image["bufferView"]]
     start = view.get("byteOffset", 0)
     payload = bytes(glb.bin[start : start + view["byteLength"]])
-    new_payload = _recolor_image_bytes(payload, rgb)
+    new_payload = _recolor_image_bytes(payload, rgb, value_scale)
     new_view = glb.append_buffer_view(new_payload)
 
     shared = _texture_use_count(glb, tex_index) > 1
@@ -176,7 +189,7 @@ def apply_materials(glb: Glb, rules: list[MaterialRule]) -> list[str]:
             if rule.base_color:
                 rgb = parse_hex_color(rule.base_color)
                 if rule.mode == "texture":
-                    detail = _apply_texture_recolor(glb, idx, mat, rgb)
+                    detail = _apply_texture_recolor(glb, idx, mat, rgb, rule.value_scale)
                     changes.append(f"material {label}: base_color -> {rule.base_color}")
                     changes.append(detail)
                 else:

@@ -1,0 +1,53 @@
+# Lunari, runnable right now — no VRoid work needed.
+#
+#   vrmforge new examples/lunari_preset.yaml -o out/lunari.vrm
+#   vrmforge check out/lunari.vrm
+#
+# This is a kitsune SKETCH, not Lunari: a CC0 base wearing her fox tail and her
+# blonde palette. Her red/white/black miko outfit cannot be reproduced here —
+# the CC0 bases have a single baked material covering skin, hair and clothes, so
+# a colour rule would repaint the entire character at once. Outfits need VRoid;
+# see examples/lunari.yaml for the spec that refines a real export.
+#
+# The grafted parts DO get their own materials, which is why the tail can be
+# recoloured precisely while the body is left alone.
+#
+# Palette sampled from ~/vtube-agency/models/Lunari/Lunari.2048/texture_00.png.
+
+spec_version: "1"
+base: preset:100avatars/rose
+
+parts:
+  # Her defining feature. Anchors to hips automatically.
+  - from: ~/Documents/NekoBell.vrm
+    match: "*FoxTail*"
+  # Stand-in for fox ears — NekoBell has cat ears, not fox. Anchors to head.
+  - from: ~/Documents/NekoBell.vrm
+    match: "*CatEar*"
+
+materials:
+  # Only the grafted parts are recoloured; the base's single material is left
+  # alone deliberately, since tinting it would repaint everything.
+  # mode: texture is essential here. The donor's ear/tail textures are BLACK,
+  # and factor mode multiplies — black x blonde is still black. texture mode
+  # SETS the hue and saturation while keeping per-pixel value, so the fur keeps
+  # its shading and actually turns blonde.
+  # value_scale matters as much as the colour. texture mode SETS hue and
+  # saturation but PRESERVES brightness, and the donor's fur is dark (mean
+  # brightness 0.29) — so without lifting the value it stays near-black however
+  # blonde a colour you name. Black has no hue to see.
+  - match: "*FoxTail*"
+    base_color: "#d8b060"      # blonde, between her lit and shadow tones
+    mode: texture
+    value_scale: 2.6
+    shade_color: "#986838"     # sampled shadow, applied as MToon's shade factor
+  - match: "*CatEar*"
+    base_color: "#d8b060"
+    mode: texture
+    value_scale: 2.6
+    shade_color: "#986838"
+
+meta:
+  name: Lunari (sketch)
+  version: "0.1"
+  authors: ["Ethan"]

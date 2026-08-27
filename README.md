@@ -276,6 +276,18 @@ comes out at that hue. Good for a decisive recolour.
 Textures shared between materials are cloned before editing, so recolouring one
 material never bleeds into another.
 
+**`texture` mode cannot lighten.** Preserving value is what keeps shading detail,
+but it also means recolouring near-black fur to blonde leaves it near-black —
+black has no hue to show. `value_scale` multiplies per-pixel brightness (clamped
+at white) so dark textures can be lifted:
+
+```yaml
+- match: "*FoxTail*"
+  base_color: "#d8b060"
+  mode: texture
+  value_scale: 2.6      # without this the fur stays black
+```
+
 ## Grafting accessories between models
 
 `parts:` transplants an accessory — cat ears, a tail, a garment — from a donor

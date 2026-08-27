@@ -209,3 +209,35 @@ def test_missing_base_file_reports_clearly_not_a_traceback(tmp_path):
     spec = AvatarSpec.load(spec_file)
     with pytest.raises(ApplyError, match="base not found"):
         prepare_base(spec)
+
+
+def test_value_scale_lightens_a_dark_texture():
+    """texture mode preserves brightness, so a dark texture needs a value lift
+    or it stays dark whatever hue is requested."""
+    import colorsys
+    import io
+
+    from PIL import Image
+
+    from vrmforge.ops import _recolor_image_bytes
+
+    buf = io.BytesIO()
+    Image.new("RGBA", (8, 8), (20, 20, 20, 255)).save(buf, format="PNG")
+    dark_png = buf.getvalue()
+    blonde = (0xD8 / 255, 0xB0 / 255, 0x60 / 255)
+
+    def mean_value(payload):
+        px = list(Image.open(io.BytesIO(payload)).convert("RGB").getdata())
+        return sum(colorsys.rgb_to_hsv(*[c / 255 for c in p])[2] for p in px) / len(px)
+
+    plain = mean_value(_recolor_image_bytes(dark_png, blonde))
+    lifted = mean_value(_recolor_image_bytes(dark_png, blonde, value_scale=6.0))
+
+    # Hue is set either way, but only the lifted one is actually visible.
+    assert plain < 0.15, f"value should be preserved, got {plain}"
+    assert lifted > 0.4, f"value_scale did not lighten: {plain} -> {lifted}"
+
+
+def test_value_scale_is_range_checked():
+    with pytest.raises(ValidationError):
+        MaterialRule(match="x", base_color="#ffffff", mode="texture", value_scale=0)

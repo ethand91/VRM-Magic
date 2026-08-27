@@ -75,6 +75,16 @@ class MaterialRule(Strict):
     shade_color: str | None = None
     emissive_color: str | None = None
     mode: Literal["factor", "texture"] = "factor"
+    value_scale: float = Field(
+        default=1.0,
+        gt=0.0,
+        le=10.0,
+        description=(
+            "texture mode only: multiply per-pixel brightness. Hue and saturation "
+            "are SET, but value is preserved by default, so a dark texture stays "
+            "dark however light a colour you ask for. Raise this to lighten it."
+        ),
+    )
     required: bool = Field(
         default=True,
         description="error if the pattern matches no material (catches typos)",
