@@ -94,9 +94,9 @@ def _recolor_image_bytes(payload: bytes, rgb: tuple[float, float, float]) -> byt
     This is a SET, not a blend: the output hue is the requested hue everywhere,
     while shading detail survives because V is untouched.
     """
-    from PIL import Image  # imported lazily so `factor` mode needs no Pillow
-
     import colorsys
+
+    from PIL import Image  # imported lazily so `factor` mode needs no Pillow
 
     img = Image.open(io.BytesIO(payload))
     img = img.convert("RGBA")

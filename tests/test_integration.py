@@ -27,7 +27,10 @@ def test_build_preserves_spring_bones_and_expressions(tmp_path):
     after, changes = build(spec)
 
     assert changes
-    assert after.json["extensions"]["VRMC_springBone"] == before.json["extensions"]["VRMC_springBone"]
+    assert (
+        after.json["extensions"]["VRMC_springBone"]
+        == before.json["extensions"]["VRMC_springBone"]
+    )
     assert (
         after.vrm["expressions"]["preset"].keys()
         == before.vrm["expressions"]["preset"].keys()

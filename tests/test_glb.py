@@ -26,7 +26,8 @@ def test_append_buffer_view_keeps_existing_offsets(vrm):
     idx = g.append_buffer_view(b"hello world")
     assert json.dumps(g.json["bufferViews"][0], sort_keys=True) == before
     view = g.json["bufferViews"][idx]
-    assert bytes(g.bin[view["byteOffset"] : view["byteOffset"] + view["byteLength"]]) == b"hello world"
+    start = view["byteOffset"]
+    assert bytes(g.bin[start : start + view["byteLength"]]) == b"hello world"
 
 
 def test_buffer_length_tracks_bin(vrm, tmp_path):

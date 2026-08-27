@@ -8,7 +8,9 @@ from pathlib import Path
 import click
 
 from vrmforge.glb import Glb, GlbError
-from vrmforge.ops import ApplyError, build as build_avatar, inspect as inspect_glb
+from vrmforge.ops import ApplyError
+from vrmforge.ops import build as build_avatar
+from vrmforge.ops import inspect as inspect_glb
 from vrmforge.spec import AvatarSpec
 
 

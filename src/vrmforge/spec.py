@@ -129,7 +129,7 @@ class AvatarSpec(Strict):
     transforms: TransformSpec | None = None
 
     @classmethod
-    def load(cls, path: str | Path) -> "AvatarSpec":
+    def load(cls, path: str | Path) -> AvatarSpec:
         raw = yaml.safe_load(Path(path).read_text())
         if not isinstance(raw, dict):
             raise ValueError(f"{path}: spec must be a YAML mapping")

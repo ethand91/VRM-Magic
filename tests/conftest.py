@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import io
-import struct
 
 import pytest
 from PIL import Image

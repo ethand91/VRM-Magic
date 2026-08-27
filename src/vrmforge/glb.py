@@ -37,7 +37,7 @@ class Glb:
     # ── Reading ──────────────────────────────────────────────────────────────
 
     @classmethod
-    def load(cls, path: str | Path) -> "Glb":
+    def load(cls, path: str | Path) -> Glb:
         data = Path(path).read_bytes()
         if data[:4] != _MAGIC:
             raise GlbError(f"{path}: not a GLB file (magic was {data[:4]!r})")
