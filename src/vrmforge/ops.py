@@ -273,6 +273,27 @@ def apply_transforms(glb: Glb, transforms: TransformSpec) -> list[str]:
     return changes
 
 
+# ── Parts ────────────────────────────────────────────────────────────────────
+
+
+def apply_parts(glb: Glb, rules: list) -> list[str]:
+    from vrmforge.graft import GraftError, attach, extract
+
+    changes: list[str] = []
+    for rule in rules:
+        donor_path = Path(rule.from_)
+        if not donor_path.exists():
+            raise ApplyError(f"parts: donor not found: {donor_path}")
+        try:
+            donor = Glb.load(donor_path)
+            part = extract(donor, rule.match)
+            changes.append(f"part {part.name!r} from {donor_path.name}")
+            changes += [f"  {line}" for line in attach(glb, part)]
+        except GraftError as exc:
+            raise ApplyError(f"parts: {exc}") from exc
+    return changes
+
+
 # ── Orchestration ────────────────────────────────────────────────────────────
 
 
@@ -324,6 +345,8 @@ def build(spec: AvatarSpec) -> tuple[Glb, list[str]]:
 
     if spec.meta:
         changes += apply_meta(glb, spec.meta)
+    if spec.parts:
+        changes += apply_parts(glb, spec.parts)
     if spec.materials:
         changes += apply_materials(glb, spec.materials)
     if spec.expressions:

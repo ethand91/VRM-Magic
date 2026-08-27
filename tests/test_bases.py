@@ -15,6 +15,10 @@ def test_unknown_base_raises_and_lists_available():
         bases.resolve("nope/missing")
 
 
+def test_registry_is_not_empty():
+    assert bases.REGISTRY, "the shipped registry must contain at least one base"
+
+
 def test_registry_entries_are_self_consistent():
     for base_id, base in bases.REGISTRY.items():
         assert base.id == base_id
@@ -22,6 +26,37 @@ def test_registry_entries_are_self_consistent():
         assert base.licence, f"{base_id}: every base must record a licence"
         assert base.source_url.startswith("https://"), f"{base_id}: insecure source"
         assert base.spec_version in {"0.x", "1.0"}
+        assert base.size_bytes > 0, f"{base_id}: size must be recorded"
+        assert base.creator, f"{base_id}: provenance requires a creator"
+
+
+def test_every_base_has_a_permission_mapping():
+    """A base whose licence has no permission mapping would silently ship
+    whatever the converter left behind — the bug this registry exists to fix."""
+    for base_id, base in bases.REGISTRY.items():
+        assert base.meta, f"{base_id}: no licence meta"
+        assert base.meta["licenseUrl"], f"{base_id}: no licence URL"
+
+
+def test_unknown_licence_is_rejected():
+    with pytest.raises(bases.BaseError, match="no permission mapping"):
+        bases.licence_meta("WTFPL", ["someone"])
+
+
+def test_cc_by_requires_credit_and_cc0_does_not():
+    assert bases.licence_meta("CC-BY-4.0", ["a"])["creditNotation"] == "required"
+    assert bases.licence_meta("CC0-1.0", ["a"])["creditNotation"] == "unnecessary"
+
+
+def test_no_base_permits_harmful_usage():
+    for base_id, base in bases.REGISTRY.items():
+        for flag in (
+            "allowExcessivelyViolentUsage",
+            "allowExcessivelySexualUsage",
+            "allowPoliticalOrReligiousUsage",
+            "allowAntisocialOrHateUsage",
+        ):
+            assert base.meta[flag] is False, f"{base_id}: {flag} should default off"
 
 
 def test_cc0_bases_declare_permissive_meta():
@@ -86,13 +121,14 @@ def test_fetch_accepts_matching_checksum(tmp_path, monkeypatch):
 
 
 def test_spec_recognises_preset_base(tmp_path):
+    some_id = next(iter(bases.REGISTRY))
     p = tmp_path / "s.yaml"
-    p.write_text("spec_version: '1'\nbase: preset:100avatars/rose\n")
+    p.write_text(f"spec_version: '1'\nbase: preset:{some_id}\n")
     spec = AvatarSpec.load(p)
     assert spec.is_preset
-    assert spec.preset_id == "100avatars/rose"
+    assert spec.preset_id == some_id
     # A preset must NOT be rewritten into a filesystem path.
-    assert spec.base == "preset:100avatars/rose"
+    assert spec.base == f"preset:{some_id}"
 
 
 def test_spec_path_base_is_resolved_against_spec_file(tmp_path):

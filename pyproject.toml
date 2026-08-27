@@ -23,6 +23,11 @@ vrmforge = "vrmforge.cli:main"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+# bases.json and the Blender helper are data, not importable modules —
+# without this they are missing from an installed wheel.
+[tool.setuptools.package-data]
+vrmforge = ["bases.json", "scripts/*.py"]
+
 [tool.ruff]
 line-length = 100
 

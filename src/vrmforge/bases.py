@@ -13,6 +13,7 @@ locked down. The registry holds the truth so `new` can restore it.
 from __future__ import annotations
 
 import hashlib
+import json
 import urllib.request
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -38,55 +39,86 @@ class Base:
     meta: dict = field(default_factory=dict)
 
 
-_CC0_URL = "https://creativecommons.org/publicdomain/zero/1.0/"
+_LICENCE_URLS = {
+    "CC0-1.0": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "CC-BY-4.0": "https://creativecommons.org/licenses/by/4.0/",
+}
 
-# CC0 is asserted at collection level in the registry's projects.json; the
-# per-avatar `license` field there is null. Provenance: 100Avatars by Polygonal
-# Mind, catalogued at github.com/toxsam/open-source-avatars.
-_CC0_META = {
-    "licenseUrl": _CC0_URL,
-    "avatarPermission": "everyone",
-    "commercialUsage": "corporation",
-    "creditNotation": "unnecessary",
-    "modification": "allowModificationRedistribution",
-    "allowRedistribution": True,
+# The VRM 1.0 permission block implied by each licence. This is what `new`
+# restores after conversion, so it must reflect the licence accurately —
+# CC-BY differs from CC0 only in requiring credit.
+_LICENCE_META = {
+    "CC0-1.0": {
+        "avatarPermission": "everyone",
+        "commercialUsage": "corporation",
+        "creditNotation": "unnecessary",
+        "modification": "allowModificationRedistribution",
+        "allowRedistribution": True,
+    },
+    "CC-BY-4.0": {
+        "avatarPermission": "everyone",
+        "commercialUsage": "corporation",
+        "creditNotation": "required",
+        "modification": "allowModificationRedistribution",
+        "allowRedistribution": True,
+    },
+}
+
+_NEVER_ALLOWED = {
     "allowExcessivelyViolentUsage": False,
     "allowExcessivelySexualUsage": False,
     "allowPoliticalOrReligiousUsage": False,
     "allowAntisocialOrHateUsage": False,
 }
 
-REGISTRY: dict[str, Base] = {
-    b.id: b
-    for b in [
-        Base(
-            id="100avatars/rose",
-            name="Rose",
-            creator="Polygonal Mind",
-            licence="CC0-1.0",
-            licence_url=_CC0_URL,
-            source_url="https://arweave.net/Ea1KXujzJatQgCFSMzGOzp_UtHqB1pyia--U3AtkMAY",
-            sha256="8e44e5638ffdf935e5d6fa990aa6cba428269f342f2db024c2961ee286a41e5f",
-            spec_version="0.x",
-            size_bytes=2400964,
-            notes="Stylised low-poly female humanoid. 52 humanoid bones, 16 morph targets.",
-            meta={**_CC0_META, "authors": ["Polygonal Mind"]},
-        ),
-        Base(
-            id="100avatars/robert",
-            name="Robert",
-            creator="Polygonal Mind",
-            licence="CC0-1.0",
-            licence_url=_CC0_URL,
-            source_url="https://arweave.net/gwG7w4bY-A5c3R6A6GOz3xBCgbPvkFQmqPIDtvnNsYI",
-            sha256="5e3edaf330577ee4c3f6440b8989af3722e7c800bb90eb037f1c05cdfe61fd7c",
-            spec_version="0.x",
-            size_bytes=1656464,
-            notes="Stylised low-poly male humanoid.",
-            meta={**_CC0_META, "authors": ["Polygonal Mind"]},
-        ),
-    ]
-}
+_DATA_FILE = Path(__file__).parent / "bases.json"
+
+
+def licence_meta(licence: str, authors: list[str]) -> dict:
+    """The VRM meta block implied by a licence. Raises on an unknown licence."""
+    if licence not in _LICENCE_META:
+        raise BaseError(
+            f"no permission mapping for licence {licence!r}; "
+            f"known: {sorted(_LICENCE_META)}"
+        )
+    return {
+        "licenseUrl": _LICENCE_URLS[licence],
+        "authors": list(authors),
+        **_LICENCE_META[licence],
+        **_NEVER_ALLOWED,
+    }
+
+
+def _load_registry() -> dict[str, Base]:
+    # A missing data file means a broken install (package-data not shipped), not
+    # a user error — say so rather than surfacing a bare FileNotFoundError.
+    try:
+        raw = json.loads(_DATA_FILE.read_text())
+    except FileNotFoundError as exc:
+        raise BaseError(
+            f"base registry data file is missing: {_DATA_FILE}\n"
+            "  This usually means the package was installed without its data files."
+        ) from exc
+    out: dict[str, Base] = {}
+    for entry in raw["bases"]:
+        licence = entry["licence"]
+        out[entry["id"]] = Base(
+            id=entry["id"],
+            name=entry["name"],
+            creator=entry["creator"],
+            licence=licence,
+            licence_url=_LICENCE_URLS[licence],
+            source_url=entry["source_url"],
+            sha256=entry["sha256"],
+            spec_version=entry["spec_version"],
+            size_bytes=entry["size_bytes"],
+            notes=entry.get("notes", ""),
+            meta=licence_meta(licence, entry.get("authors", [entry["creator"]])),
+        )
+    return out
+
+
+REGISTRY: dict[str, Base] = _load_registry()
 
 
 def cache_dir() -> Path:

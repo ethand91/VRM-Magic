@@ -1,0 +1,178 @@
+"""Regenerate src/vrmforge/bases.json from the open-source-avatars registry.
+
+Every candidate is downloaded, hashed, and opened with vrmforge's own GLB reader
+so the recorded spec version and bone count are observed facts rather than
+manifest claims. Anything that fails to download or parse is skipped and
+reported — the registry only ever contains entries that were verified.
+
+Usage:
+    python tools/build_registry.py [--per-collection N] [--out PATH]
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import sys
+import time
+import urllib.error
+import urllib.request
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
+
+from vrmforge.glb import Glb, GlbError  # noqa: E402
+from vrmforge.ops import inspect as inspect_glb  # noqa: E402
+
+REGISTRY_ROOT = "https://raw.githubusercontent.com/toxsam/open-source-avatars/main/data/"
+
+# Collection id -> (short prefix for base ids, creator, licence).
+COLLECTIONS = {
+    "100avatars-r1": ("100avatars", "Polygonal Mind", "CC0-1.0"),
+    "100avatars-r2": ("100avatars-r2", "Polygonal Mind", "CC0-1.0"),
+    "100avatars-r3": ("100avatars-r3", "Polygonal Mind", "CC0-1.0"),
+    "grifters-squaddies": ("grifters", "Grifters", "CC0-1.0"),
+    "toxsam": ("toxsam", "ToxSam", "CC0-1.0"),
+    "halloween-rising": ("halloween", "Polygonal Mind", "CC0-1.0"),
+    "xmas-chibis": ("xmas", "Polygonal Mind", "CC0-1.0"),
+    "vipe-heroes-genesis": ("vipe", "VIPE", "CC-BY-4.0"),
+}
+
+
+def _get(url: str, *, retries: int = 3, timeout: int = 180) -> bytes:
+    """Fetch with backoff. The arweave gateway rate-limits bursts with 403s."""
+    delay = 2.0
+    last: Exception | None = None
+    for attempt in range(retries):
+        try:
+            with urllib.request.urlopen(url, timeout=timeout) as response:
+                return response.read()
+        except urllib.error.HTTPError as exc:
+            last = exc
+            if exc.code not in (403, 429, 502, 503):
+                raise
+            time.sleep(delay)
+            delay *= 2
+        except Exception as exc:  # noqa: BLE001
+            last = exc
+            time.sleep(delay)
+            delay *= 2
+    raise RuntimeError(f"giving up on {url}: {last}")
+
+
+def _slug(name: str) -> str:
+    keep = [c.lower() if c.isalnum() else "-" for c in name.strip()]
+    out = "".join(keep)
+    while "--" in out:
+        out = out.replace("--", "-")
+    return out.strip("-") or "unnamed"
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--per-collection", type=int, default=4)
+    ap.add_argument("--out", default="src/vrmforge/bases.json")
+    ap.add_argument("--pause", type=float, default=1.0, help="seconds between downloads")
+    args = ap.parse_args()
+
+    entries: list[dict] = []
+    skipped: list[str] = []
+    seen_ids: set[str] = set()
+
+    for collection, (prefix, creator, licence) in COLLECTIONS.items():
+        try:
+            manifest = json.loads(_get(f"{REGISTRY_ROOT}avatars/{collection}.json"))
+        except Exception as exc:  # noqa: BLE001
+            skipped.append(f"{collection}: manifest unavailable ({exc})")
+            continue
+
+        items = manifest if isinstance(manifest, list) else manifest.get("avatars", [])
+        taken = 0
+        for item in items:
+            if taken >= args.per_collection:
+                break
+            url = item.get("model_file_url")
+            name = (item.get("name") or "").strip()
+            if not url or not name:
+                continue
+
+            base_id = f"{prefix}/{_slug(name)}"
+            if base_id in seen_ids:
+                continue
+
+            try:
+                payload = _get(url)
+            except Exception as exc:  # noqa: BLE001
+                skipped.append(f"{base_id}: download failed ({exc})")
+                continue
+
+            tmp = Path("/tmp") / f"vrmforge_probe_{hashlib.sha256(url.encode()).hexdigest()[:12]}.vrm"
+            tmp.write_bytes(payload)
+            try:
+                glb = Glb.load(tmp)
+                report = inspect_glb(glb)
+            except (GlbError, Exception) as exc:  # noqa: BLE001
+                skipped.append(f"{base_id}: not a readable VRM ({exc})")
+                tmp.unlink(missing_ok=True)
+                continue
+            finally:
+                tmp.unlink(missing_ok=True)
+
+            spec_version = report["spec_version"]
+            if spec_version is None:
+                skipped.append(f"{base_id}: plain glTF, no VRM extension")
+                continue
+            bones = report["humanoid_bones"]
+            if bones < 15:
+                skipped.append(f"{base_id}: only {bones} humanoid bones, not riggable")
+                continue
+
+            entries.append(
+                {
+                    "id": base_id,
+                    "name": name,
+                    "creator": creator,
+                    "authors": [creator],
+                    "licence": licence,
+                    "source_url": url,
+                    "sha256": hashlib.sha256(payload).hexdigest(),
+                    "spec_version": spec_version,
+                    "size_bytes": len(payload),
+                    "notes": (
+                        f"{bones} humanoid bones, "
+                        f"{len(report['expressions'])} expressions, "
+                        f"{len(report['materials'])} material(s)."
+                    ),
+                }
+            )
+            seen_ids.add(base_id)
+            taken += 1
+            print(f"  ok  {base_id:<34} VRM {spec_version}  {len(payload)//1024:>5}KB  {bones} bones")
+            time.sleep(args.pause)
+
+    out = Path(args.out)
+    out.write_text(
+        json.dumps(
+            {
+                "_comment": (
+                    "Generated by tools/build_registry.py. Every entry was downloaded, "
+                    "hashed and parsed; spec_version and notes are observed, not claimed. "
+                    "Licences are recorded per collection from the upstream projects.json."
+                ),
+                "source": "https://github.com/toxsam/open-source-avatars",
+                "bases": entries,
+            },
+            indent=2,
+        )
+        + "\n"
+    )
+    print(f"\nwrote {out} with {len(entries)} base(s)")
+    if skipped:
+        print(f"skipped {len(skipped)}:")
+        for line in skipped:
+            print(f"  - {line}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -228,11 +228,56 @@ comes out at that hue. Good for a decisive recolour.
 Textures shared between materials are cloned before editing, so recolouring one
 material never bleeds into another.
 
+## Grafting accessories between models
+
+`parts:` transplants an accessory — cat ears, a tail, a garment — from a donor
+VRM onto the base:
+
+```yaml
+parts:
+  - from: models/donor.vrm
+    match: "*CatEar*"        # glob against the donor's material name
+```
+
+```console
+  part 'Accessory_CatEar_01_CLOTH (Instance)' from donor.vrm
+    added 8 bone(s) under head
+    extended skin to 69 joints, rebuilt bind matrices
+    copied material with 3 texture(s)
+    added primitive: 612 vertices, 914 triangles
+    copied 2 spring bone chain(s)
+```
+
+**Donor and base skeletons do not have to match.** VRoid accessory bones are not
+part of the core skeleton — the `J_Opt_*_CatEar*` bones parent straight to
+`J_Bip_C_Head`, which is the VRM humanoid `head`. The part therefore brings its
+own rig, and the base only needs a `head` bone, which every VRM has because
+`head` is a required humanoid bone.
+
+Bind matrices are **recomputed** against the target's anchor rather than copied
+from the donor. A bind pose is world-space, so reusing the donor's would misplace
+the part on a differently proportioned skeleton. Cat ears from a 266-bone VRoid
+model land correctly on a 52-bone one.
+
+Spring bone chains travel with the part, so the ears still wobble.
+
+### Limits
+
+One part per rule, and the part must be a skinned primitive with no morph
+targets. Parts anchored to more than one humanoid bone are refused rather than
+guessed at.
+
+### Licensing
+
+VRoid's built-in accessories are pixiv's assets. Grafting between models you own
+is ordinary use; redistributing the result, or publishing a parts library built
+from them, is not. vrmforge ships no parts — you supply the donor.
+
 ## What it does not do
 
-**No new geometry.** It cannot add cat ears, swap an outfit, restyle hair, or
-change body proportions beyond scaling joint nodes. Assembling characters from a
-parts library is a separate and much larger problem.
+**No procedural geometry.** It can move existing parts between models, but it
+cannot author new ones — no restyled hair, no new garments, no body proportions
+beyond scaling joint nodes.
 
 **Joint scaling does not re-simulate spring bones.** Hair and accessory physics
 were tuned at the original scale; a large change will need them retuned.

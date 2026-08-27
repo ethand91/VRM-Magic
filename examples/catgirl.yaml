@@ -1,0 +1,23 @@
+# Give any avatar cat ears, from a donor model you own.
+#
+# Accessory bones are not part of the core skeleton — VRoid parents the
+# J_Opt_*_CatEar* bones straight to the head. The part therefore brings its own
+# rig, and donor and base skeletons do NOT have to match: the base only needs a
+# humanoid `head`, which every VRM has.
+#
+# Bind matrices are recomputed against the target's head, so the ears sit
+# correctly even on a differently proportioned model.
+#
+# Note: VRoid's built-in accessories are pixiv's assets. Grafting between your
+# own models is ordinary use; redistributing the result is not.
+
+spec_version: "1"
+base: preset:100avatars/robert
+
+parts:
+  - from: ../models/avatar.vrm     # your donor — a VRoid export with cat ears
+    match: "*CatEar*"
+
+meta:
+  name: Catgirl Robert
+  authors: ["Ethan"]

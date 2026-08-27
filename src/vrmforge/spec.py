@@ -88,6 +88,19 @@ class MaterialRule(Strict):
         return v
 
 
+class PartRule(Strict):
+    """Graft an accessory from a donor VRM onto the base.
+
+    The part brings its own bones, so donor and base skeletons need not match —
+    only a shared humanoid attachment point (the part's bones hang from one).
+    """
+
+    from_: str = Field(alias="from", description="path to the donor .vrm")
+    match: str = Field(description="glob against the donor's material name")
+
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+
 class ExpressionRule(Strict):
     """Override properties of one VRM 1.0 expression preset."""
 
@@ -126,6 +139,7 @@ class AvatarSpec(Strict):
         description="path to a source .vrm, or 'preset:<id>' for a registry base"
     )
     meta: MetaSpec | None = None
+    parts: list[PartRule] = Field(default_factory=list)
     materials: list[MaterialRule] = Field(default_factory=list)
     expressions: dict[str, ExpressionRule] = Field(default_factory=dict)
     transforms: TransformSpec | None = None
@@ -136,6 +150,11 @@ class AvatarSpec(Strict):
         if not isinstance(raw, dict):
             raise ValueError(f"{path}: spec must be a YAML mapping")
         spec = cls.model_validate(raw)
+        for part in spec.parts:
+            donor = Path(part.from_).expanduser()
+            part.from_ = str(
+                donor if donor.is_absolute() else (Path(path).parent / donor).resolve()
+            )
         if not spec.is_preset:
             # Resolve `base` relative to the spec file, not the cwd.
             base = Path(spec.base).expanduser()
