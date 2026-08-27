@@ -3,10 +3,40 @@
   "source": "https://github.com/toxsam/open-source-avatars",
   "bases": [
     {
+      "id": "100avatars/devil",
+      "name": "Devil",
+      "creator": "Polygonal Mind",
+      "authors": [
+        "Polygonal Mind"
+      ],
+      "licence": "CC0-1.0",
+      "source_url": "https://arweave.net/gfVzs1oH_aPaHVxpQK86HT_rqzyrFPOUKUrDJ30yprs",
+      "sha256": "2e428dd1846504a77f3936259f489a899cc92aa6179b769a1aee230f875a9b4d",
+      "spec_version": "0.x",
+      "size_bytes": 1393048,
+      "notes": "52 humanoid bones, 6 expressions, 1 material(s)."
+    },
+    {
+      "id": "100avatars/polydancer",
+      "name": "Polydancer",
+      "creator": "Polygonal Mind",
+      "authors": [
+        "Polygonal Mind"
+      ],
+      "licence": "CC0-1.0",
+      "source_url": "https://arweave.net/jPOg-G0MPH55ZQmamFhT9f8cHn-hjeAQ0mRO5gWeKMQ",
+      "sha256": "9bc28f2f2ab9d20aaa0da6c7b272a3f2363058414362bbfc176713c4585e4244",
+      "spec_version": "0.x",
+      "size_bytes": 1242088,
+      "notes": "52 humanoid bones, 8 expressions, 1 material(s)."
+    },
+    {
       "id": "100avatars/rose",
       "name": "Rose",
       "creator": "Polygonal Mind",
-      "authors": ["Polygonal Mind"],
+      "authors": [
+        "Polygonal Mind"
+      ],
       "licence": "CC0-1.0",
       "source_url": "https://arweave.net/Ea1KXujzJatQgCFSMzGOzp_UtHqB1pyia--U3AtkMAY",
       "sha256": "8e44e5638ffdf935e5d6fa990aa6cba428269f342f2db024c2961ee286a41e5f",
@@ -18,13 +48,127 @@
       "id": "100avatars/robert",
       "name": "Robert",
       "creator": "Polygonal Mind",
-      "authors": ["Polygonal Mind"],
+      "authors": [
+        "Polygonal Mind"
+      ],
       "licence": "CC0-1.0",
       "source_url": "https://arweave.net/gwG7w4bY-A5c3R6A6GOz3xBCgbPvkFQmqPIDtvnNsYI",
       "sha256": "5e3edaf330577ee4c3f6440b8989af3722e7c800bb90eb037f1c05cdfe61fd7c",
       "spec_version": "0.x",
       "size_bytes": 1656464,
-      "notes": "Stylised low-poly male humanoid."
+      "notes": "52 humanoid bones, 6 expressions, 1 material(s)."
+    },
+    {
+      "id": "100avatars-r2/pyresorcerer",
+      "name": "PyreSorcerer",
+      "creator": "Polygonal Mind",
+      "authors": [
+        "Polygonal Mind"
+      ],
+      "licence": "CC0-1.0",
+      "source_url": "https://arweave.net/Hc8Rd0EGKNHEevpm1D16BwP-LAPDS319Hvn0fualX_w",
+      "sha256": "77a4d9ab15556b009bb1b8976e24e8aac31ec7539f4993ee2e2f97d958fd6293",
+      "spec_version": "0.x",
+      "size_bytes": 2406280,
+      "notes": "50 humanoid bones, 7 expressions, 1 material(s)."
+    },
+    {
+      "id": "100avatars-r2/coolpan",
+      "name": "CoolPan",
+      "creator": "Polygonal Mind",
+      "authors": [
+        "Polygonal Mind"
+      ],
+      "licence": "CC0-1.0",
+      "source_url": "https://arweave.net/aVB6TrTpPLAoPgZIG5lWwBh4ZdMfkeXmTcU1ybgwHuE",
+      "sha256": "819bd4a30870acfcd11e7932093666dd38aee4e15b5356b914e8a54be383351f",
+      "spec_version": "0.x",
+      "size_bytes": 1747476,
+      "notes": "50 humanoid bones, 8 expressions, 1 material(s)."
+    },
+    {
+      "id": "100avatars-r2/face",
+      "name": "face",
+      "creator": "Polygonal Mind",
+      "authors": [
+        "Polygonal Mind"
+      ],
+      "licence": "CC0-1.0",
+      "source_url": "https://arweave.net/4eYMl57GgEBFpFF6VJvrsTXLHNSKdyT4jumee0LiPwk",
+      "sha256": "6f986c95fc5cdc8e7cd9db4526890ff24e9aa53ea251d7e4db8cb57244d0c540",
+      "spec_version": "0.x",
+      "size_bytes": 1076720,
+      "notes": "50 humanoid bones, 5 expressions, 1 material(s)."
+    },
+    {
+      "id": "100avatars-r2/coffeemaker",
+      "name": "CoffeeMaker",
+      "creator": "Polygonal Mind",
+      "authors": [
+        "Polygonal Mind"
+      ],
+      "licence": "CC0-1.0",
+      "source_url": "https://arweave.net/WJOa34mvhIq-Igh3B1XRUSVVtVcBd_r-5VkdzwTK0BU",
+      "sha256": "86fca92ed62ab2a7dc2ebef18a00565d21dcfcaa557a28765bb63a3144997103",
+      "spec_version": "0.x",
+      "size_bytes": 1374656,
+      "notes": "50 humanoid bones, 7 expressions, 1 material(s)."
+    },
+    {
+      "id": "100avatars-r3/cooltiger",
+      "name": "CoolTiger",
+      "creator": "Polygonal Mind",
+      "authors": [
+        "Polygonal Mind"
+      ],
+      "licence": "CC0-1.0",
+      "source_url": "https://arweave.net/2EQ5wsstsJaFOG9LXq_gVFKKgM8bnfPa3axYJ-VS1ug",
+      "sha256": "4b471b59517733b2f3804acc80e8ea485260efb956a5c950221e4e1ff30860e2",
+      "spec_version": "0.x",
+      "size_bytes": 8239828,
+      "notes": "42 humanoid bones, 17 expressions, 1 material(s)."
+    },
+    {
+      "id": "100avatars-r3/jenny",
+      "name": "Jenny",
+      "creator": "Polygonal Mind",
+      "authors": [
+        "Polygonal Mind"
+      ],
+      "licence": "CC0-1.0",
+      "source_url": "https://arweave.net/kgTirc4OvUWbJhIKC2CB3_pYsYuB62KTj90IdE8s3sk",
+      "sha256": "9f287e57a973b245365d7252bc6852c6c29904f8bb09e291f58cbee9a3f1298c",
+      "spec_version": "0.x",
+      "size_bytes": 6746345,
+      "notes": "52 humanoid bones, 17 expressions, 1 material(s)."
+    },
+    {
+      "id": "100avatars-r3/weirdcat",
+      "name": "WeirdCat",
+      "creator": "Polygonal Mind",
+      "authors": [
+        "Polygonal Mind"
+      ],
+      "licence": "CC0-1.0",
+      "source_url": "https://arweave.net/pPaWwgWt8Gu7hJyHo_wG45lxPVV8ka8zBJJKSQD8Ngs",
+      "sha256": "8ab0d32531ca53e6dfe6be58e16f5d7aff1173a65adf447c8b4aa92f8d250495",
+      "spec_version": "0.x",
+      "size_bytes": 6380931,
+      "notes": "40 humanoid bones, 17 expressions, 1 material(s)."
+    },
+    {
+      "id": "100avatars-r3/petaldude",
+      "name": "PetalDude",
+      "creator": "Polygonal Mind",
+      "authors": [
+        "Polygonal Mind"
+      ],
+      "licence": "CC0-1.0",
+      "source_url": "https://arweave.net/IUrUx8QMcaZDWLSOPWz8UiM5bq-sR3dXAQwwmIeiOBE",
+      "sha256": "c81006db669a2631c39bcec9f59cbb08e5eb2a2087ada5ea32b9fe5f13f5e18d",
+      "spec_version": "0.x",
+      "size_bytes": 7817340,
+      "notes": "52 humanoid bones, 17 expressions, 2 material(s)."
     }
   ]
 }

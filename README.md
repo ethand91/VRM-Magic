@@ -112,6 +112,9 @@ $ vrmforge new examples/from_scratch.yaml -o out/mine.vrm
 wrote out/mine.vrm (2,367,816 bytes)
 ```
 
+`vrmforge bases` lists 12 CC0 avatars from Polygonal Mind's 100Avatars series,
+catalogued at [open-source-avatars](https://github.com/toxsam/open-source-avatars).
+
 Bases are fetched once, **checksum-verified**, and cached under
 `~/.cache/vrmforge/bases`. A base whose bytes changed is refused, not silently used.
 
