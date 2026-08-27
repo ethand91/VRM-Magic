@@ -198,3 +198,14 @@ def test_inspect_reports_reality(vrm):
     assert report["humanoid_bones"] == 3
     assert report["spring_bones"] == 1
     assert report["meshes"][0]["name"] == "Body"
+
+
+def test_missing_base_file_reports_clearly_not_a_traceback(tmp_path):
+    """A missing base is a user error and must read like one."""
+    from vrmforge.ops import prepare_base
+
+    spec_file = tmp_path / "s.yaml"
+    spec_file.write_text("spec_version: '1'\nbase: nope.vrm\n")
+    spec = AvatarSpec.load(spec_file)
+    with pytest.raises(ApplyError, match="base not found"):
+        prepare_base(spec)

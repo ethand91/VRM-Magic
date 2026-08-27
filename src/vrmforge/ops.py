@@ -303,7 +303,16 @@ def prepare_base(spec: AvatarSpec) -> tuple[Path, list[str]]:
     from vrmforge.convert import to_vrm1
 
     if not spec.is_preset:
-        return Path(spec.base), []
+        path = Path(spec.base)
+        if not path.exists():
+            raise ApplyError(
+                f"base not found: {path}\n"
+                "  `base:` must point at a .vrm you supply (paths are relative to "
+                "the spec file),\n"
+                "  or use `base: preset:<id>` to build from a bundled base "
+                "(see `vrmforge bases`)."
+            )
+        return path, []
 
     base = base_registry.resolve(spec.preset_id)
     notes = [f"base {base.id} ({base.name} by {base.creator}, {base.licence})"]

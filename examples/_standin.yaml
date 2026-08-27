@@ -1,0 +1,59 @@
+# Lunari — blonde kitsune, red/white/black miko-style outfit with gold accents.
+#
+# WHAT THIS DOES AND DOES NOT DO
+#
+# vrmforge cannot author garments. Model Lunari in VRoid Studio first (hair,
+# outfit, fox ears), export a VRM, and use this spec to lock in her exact palette,
+# graft her tail, and set the licence — repeatably, on every re-export.
+#
+# The palette below was sampled from her Live2D texture atlas at
+# ~/vtube-agency/models/Lunari/Lunari.2048/texture_00.png, so the colours are
+# measured from the real character rather than eyeballed.
+#
+# BEFORE RUNNING: the material names below are VRoid's defaults and depend on
+# which preset garments you picked. Get the real ones with:
+#
+#     vrmforge inspect models/lunari.vrm
+#
+# then adjust the `match` globs. A glob that matches nothing is a hard error
+# listing every available name, so you cannot get this silently wrong.
+#
+#     vrmforge build examples/lunari.yaml -o out/lunari.vrm --dry-run
+#     vrmforge build examples/lunari.yaml -o out/lunari.vrm
+#     vrmforge check out/lunari.vrm
+
+spec_version: "1"
+base: ../models/lunari.vrm        # your VRoid export
+
+materials:
+  # ── Hair: blonde. base_color is the lit tone, shade_color the shadow —
+  # which is exactly the lit/shade split sampled from her atlas.
+  - match: "*Hair*"
+    base_color: "#f8e8b0"
+    shade_color: "#986838"
+    mode: texture               # SET the hue rather than multiplying the texture
+
+  - match: "*FoxTail*"
+    base_color: "#f8e8b0"
+    shade_color: "#986838"
+    required: false             # tolerant: only present if the graft ran
+
+  # ── Outfit. Confirm these names with `inspect` first.
+  - match: "*Bottoms*"          # red pleated skirt
+    base_color: "#d01010"
+    required: false
+  - match: "*Tops*"             # warm off-white top
+    base_color: "#f8e0c8"
+    required: false
+  - match: "*Shoes*"            # black heeled sandals
+    base_color: "#302828"
+    required: false
+
+meta:
+  name: Lunari
+  version: "1.0"
+  authors: ["Ethan"]
+  avatar_permission: onlyAuthor
+  commercial_usage: personalNonProfit
+  modification: prohibited
+  allow_redistribution: false
