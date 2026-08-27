@@ -115,6 +115,24 @@ wrote out/mine.vrm (2,367,816 bytes)
 Bases are fetched once, **checksum-verified**, and cached under
 `~/.cache/vrmforge/bases`. A base whose bytes changed is refused, not silently used.
 
+### licenseUrl is not the content licence
+
+VRM 1.0's `meta.licenseUrl` names the **VRM licence document**, not the licence
+of the model. The actual permissions live in the structured fields
+(`avatarPermission`, `commercialUsage`, `modification`, `allowRedistribution`,
+`creditNotation`).
+
+Runtimes enforce this. three-vrm's `VRMMetaLoaderPlugin` ships a whitelist
+containing exactly `https://vrm.dev/licenses/1.0/` and throws on anything else:
+
+```
+VRMMetaLoaderPlugin: The license url "https://creativecommons.org/..." is not accepted
+```
+
+So vrmforge always writes the VRM licence URL and records the upstream content
+licence in `copyrightInformation` — preserved, and loadable. `check` warns if it
+finds a non-standard `licenseUrl`.
+
 ### Why the registry stores licence data
 
 The only practical VRM 0.x → 1.0 converter today is Blender's VRM add-on, and it

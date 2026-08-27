@@ -1,0 +1,26 @@
+# Cat ears AND a fox tail, grafted from your own VRoid export onto a CC0 base.
+#
+#   vrmforge new examples/foxgirl.yaml -o out/foxgirl.vrm
+#   vrmforge check out/foxgirl.vrm
+#
+# Nothing here needs a VRM of your own EXCEPT the donor: the base is fetched
+# from the registry, but the accessories come from a model you already have.
+# Both parts live in NekoBell.vrm as separate primitives, identified by their
+# material names — run `vrmforge inspect` on the donor to see them.
+
+spec_version: "1"
+base: preset:100avatars/robert
+
+parts:
+  - from: ~/Documents/NekoBell.vrm
+    match: "*CatEar*"
+  - from: ~/Documents/NekoBell.vrm
+    match: "*FoxTail*"
+
+meta:
+  name: Foxgirl Robert
+  version: "1.0"
+  authors: ["Ethan"]
+
+transforms:
+  height_scale: 0.98

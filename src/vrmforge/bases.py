@@ -74,6 +74,14 @@ _NEVER_ALLOWED = {
 _DATA_FILE = Path(__file__).parent / "bases.json"
 
 
+# VRM 1.0's `licenseUrl` names the VRM LICENCE DOCUMENT, not the content licence
+# — the actual permissions live in the structured fields below it. Runtimes
+# enforce this: three-vrm's VRMMetaLoaderPlugin ships a whitelist containing only
+# this URL and throws outright on anything else. The upstream licence is recorded
+# in copyrightInformation instead, where it is preserved without breaking loaders.
+VRM_LICENSE_URL = "https://vrm.dev/licenses/1.0/"
+
+
 def licence_meta(licence: str, authors: list[str]) -> dict:
     """The VRM meta block implied by a licence. Raises on an unknown licence."""
     if licence not in _LICENCE_META:
@@ -81,8 +89,10 @@ def licence_meta(licence: str, authors: list[str]) -> dict:
             f"no permission mapping for licence {licence!r}; "
             f"known: {sorted(_LICENCE_META)}"
         )
+    credit = ", ".join(authors) if authors else "unknown"
     return {
-        "licenseUrl": _LICENCE_URLS[licence],
+        "licenseUrl": VRM_LICENSE_URL,
+        "copyrightInformation": f"{licence} — {credit} — {_LICENCE_URLS[licence]}",
         "authors": list(authors),
         **_LICENCE_META[licence],
         **_NEVER_ALLOWED,

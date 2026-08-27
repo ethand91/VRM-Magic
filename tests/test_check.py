@@ -109,3 +109,8 @@ def test_non_vrm1_file_is_an_error(vrm):
     g = Glb.load(vrm)
     del g.json["extensions"]["VRMC_vrm"]
     assert "not-vrm1" in _codes(g)
+
+
+def test_warns_on_license_url_runtimes_reject(grafted):
+    grafted.vrm["meta"]["licenseUrl"] = "https://creativecommons.org/publicdomain/zero/1.0/"
+    assert "nonstandard-license-url" in _codes(grafted, severity="warning")

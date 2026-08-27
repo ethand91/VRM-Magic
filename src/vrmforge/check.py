@@ -227,6 +227,18 @@ def _vrm_ok(findings: list[Finding], glb: Glb) -> None:
             )
 
     meta = vrm.get("meta", {})
+    from vrmforge.bases import VRM_LICENSE_URL
+
+    url = meta.get("licenseUrl")
+    if url and url != VRM_LICENSE_URL:
+        findings.append(
+            Finding(WARNING, "nonstandard-license-url",
+                    f"meta.licenseUrl is {url!r}, not {VRM_LICENSE_URL!r}. "
+                    "three-vrm rejects anything else by default "
+                    "(VRMMetaLoaderPlugin: 'license url ... is not accepted'). "
+                    "Put the content licence in copyrightInformation instead.")
+        )
+
     for required in ("name", "authors", "licenseUrl"):
         if not meta.get(required):
             findings.append(

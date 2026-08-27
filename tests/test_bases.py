@@ -43,6 +43,20 @@ def test_unknown_licence_is_rejected():
         bases.licence_meta("WTFPL", ["someone"])
 
 
+def test_license_url_is_the_vrm_document_not_the_content_licence():
+    """three-vrm whitelists exactly one licenseUrl and throws on anything else.
+    The content licence belongs in copyrightInformation."""
+    meta = bases.licence_meta("CC0-1.0", ["Polygonal Mind"])
+    assert meta["licenseUrl"] == bases.VRM_LICENSE_URL
+    assert "CC0-1.0" in meta["copyrightInformation"]
+    assert "Polygonal Mind" in meta["copyrightInformation"]
+
+
+def test_registry_bases_never_set_a_nonstandard_license_url():
+    for base_id, base in bases.REGISTRY.items():
+        assert base.meta["licenseUrl"] == bases.VRM_LICENSE_URL, base_id
+
+
 def test_cc_by_requires_credit_and_cc0_does_not():
     assert bases.licence_meta("CC-BY-4.0", ["a"])["creditNotation"] == "required"
     assert bases.licence_meta("CC0-1.0", ["a"])["creditNotation"] == "unnecessary"
